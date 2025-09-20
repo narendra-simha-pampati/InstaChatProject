@@ -33,10 +33,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    learningLanguage: {
-      type: String,
-      default: "",
-    },
     location: {
       type: String,
       default: "",

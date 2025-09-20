@@ -1,5 +1,6 @@
 import express from "express";
 import passport from "passport";
+import jwt from "jsonwebtoken";
 import { login, logout, onboard, signup } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
@@ -33,8 +34,15 @@ router.get(
     session: true,
   }),
   (req, res) => {
-    // redirect to frontend on success
-    res.redirect("http://localhost:5173");
+    // Generate JWT for the logged-in user
+    const token = jwt.sign(
+      { id: req.user._id },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "7d" }
+    );
+
+    // Redirect to frontend with token in query params
+    res.redirect(`http://localhost:5173?token=${token}`);
   }
 );
 
@@ -47,3 +55,4 @@ router.get("/google/logout", (req, res) => {
 });
 
 export default router;
+
