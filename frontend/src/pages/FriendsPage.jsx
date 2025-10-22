@@ -1,6 +1,8 @@
 // frontend/src/pages/FriendsPage.jsx
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { axiosInstance } from "../lib/axios.js";
+import FriendCard from "../components/FriendCard.jsx";
+import NoFriendsFound from "../components/NoFriendsFound.jsx";
 
 const FriendsPage = () => {
   const [friends, setFriends] = useState([]);
@@ -9,7 +11,7 @@ const FriendsPage = () => {
   useEffect(() => {
     const fetchFriends = async () => {
       try {
-        const res = await axios.get("/api/users/friends"); // 👈 hitting backend route
+        const res = await axiosInstance.get("/users/friends"); // 👈 hitting backend route
         setFriends(res.data);
       } catch (error) {
         console.error("Error fetching friends:", error);
@@ -27,25 +29,13 @@ const FriendsPage = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Your Friends</h1>
       {friends.length === 0 ? (
-        <p>No friends yet.</p>
+        <NoFriendsFound />
       ) : (
-        <ul className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {friends.map((friend) => (
-            <li key={friend._id} className="flex items-center space-x-4">
-              <img
-                src={friend.profilePic || "/default-avatar.png"}
-                alt={friend.fullName}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-              <div>
-                <p className="font-semibold">{friend.fullName}</p>
-                <p className="text-sm text-gray-500">
-                  Speaks {friend.nativeLanguage} • Learning {friend.learningLanguage}
-                </p>
-              </div>
-            </li>
+            <FriendCard key={friend._id} friend={friend} />
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
