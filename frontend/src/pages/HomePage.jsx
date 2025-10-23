@@ -1,22 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import {
-  getOutgoingFriendReqs,
-  getRecommendedUsers,
-  getUserFriends,
-  sendFriendRequest,
-} from "../lib/api";
+import { useState } from "react";
 import { Link } from "react-router";
-import { CheckCircleIcon, MapPinIcon, UserPlusIcon, UsersIcon } from "lucide-react";
-
-import { capitialize } from "../lib/utils";
-
-import FriendCard, { getLanguageFlag } from "../components/FriendCard";
+import { BellIcon, UsersIcon, SearchIcon, FilterIcon } from "lucide-react";
+import StoriesBar from "../components/StoriesBar";
+import ProfessionalFeed from "../components/ProfessionalFeed";
+import FriendCard from "../components/FriendCard";
 import NoFriendsFound from "../components/NoFriendsFound";
+import { useQuery } from "@tanstack/react-query";
+import { getUserFriends, getRecommendedUsers } from "../lib/api";
 
 const HomePage = () => {
-  const queryClient = useQueryClient();
-  const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: friends = [], isLoading: loadingFriends } = useQuery({
     queryKey: ["friends"],
@@ -28,138 +22,190 @@ const HomePage = () => {
     queryFn: getRecommendedUsers,
   });
 
-  const { data: outgoingFriendReqs } = useQuery({
-    queryKey: ["outgoingFriendReqs"],
-    queryFn: getOutgoingFriendReqs,
-  });
-
-  const { mutate: sendRequestMutation, isPending } = useMutation({
-    mutationFn: sendFriendRequest,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] }),
-  });
-
-  useEffect(() => {
-    const outgoingIds = new Set();
-    if (outgoingFriendReqs && outgoingFriendReqs.length > 0) {
-      outgoingFriendReqs.forEach((req) => {
-        outgoingIds.add(req.recipient._id);
-      });
-      setOutgoingRequestsIds(outgoingIds);
-    }
-  }, [outgoingFriendReqs]);
-
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="container mx-auto space-y-10">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Your Friends</h2>
-          <Link to="/notifications" className="btn btn-outline btn-sm">
-            <UsersIcon className="mr-2 size-4" />
-            Friend Requests
-          </Link>
-        </div>
-
-        {loadingFriends ? (
-          <div className="flex justify-center py-12">
-            <span className="loading loading-spinner loading-lg" />
-          </div>
-        ) : friends.length === 0 ? (
-          <NoFriendsFound />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {friends.map((friend) => (
-              <FriendCard key={friend._id} friend={friend} />
-            ))}
-          </div>
-        )}
-
-        <section>
-          <div className="mb-6 sm:mb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Meet New People</h2>
-                <p className="opacity-70">
-                  Discover perfect partners based on your profile
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {loadingUsers ? (
-            <div className="flex justify-center py-12">
-              <span className="loading loading-spinner loading-lg" />
-            </div>
-          ) : recommendedUsers.length === 0 ? (
-            <div className="card bg-base-200 p-6 text-center">
-              <h3 className="font-semibold text-lg mb-2">No recommendations available</h3>
-              <p className="text-base-content opacity-70">
-                Check back later for new connections!
+    <div className="min-h-screen bg-base-200">
+      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Welcome Back!
+              </h1>
+              <p className="text-base-content opacity-70 mt-2">
+                Discover new connections and share your language journey
               </p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recommendedUsers.map((user) => {
-                const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
-
-                return (
-                  <div
-                    key={user._id}
-                    className="card bg-base-200 hover:shadow-lg transition-all duration-300"
-                  >
-                    <div className="card-body p-5 space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="avatar size-16 rounded-full">
-                          <img src={user.profilePic} alt={user.fullName} />
-                        </div>
-
-                        <div>
-                          <h3 className="font-semibold text-lg">{user.fullName}</h3>
-                          {user.location && (
-                            <div className="flex items-center text-xs opacity-70 mt-1">
-                              <MapPinIcon className="size-3 mr-1" />
-                              {user.location}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Native language only */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="badge badge-secondary">
-                          {getLanguageFlag(user.nativeLanguage)}
-                          Native: {capitialize(user.nativeLanguage)}
-                        </span>
-                      </div>
-
-                      {user.bio && <p className="text-sm opacity-70">{user.bio}</p>}
-
-                      {/* Action button */}
-                      <button
-                        className={`btn w-full mt-2 ${
-                          hasRequestBeenSent ? "btn-disabled" : "btn-primary"
-                        } `}
-                        onClick={() => sendRequestMutation(user._id)}
-                        disabled={hasRequestBeenSent || isPending}
-                      >
-                        {hasRequestBeenSent ? (
-                          <>
-                            <CheckCircleIcon className="size-4 mr-2" />
-                            Request Sent
-                          </>
-                        ) : (
-                          <>
-                            <UserPlusIcon className="size-4 mr-2" />
-                            Send Friend Request
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+            
+            <div className="flex items-center gap-3">
+              <Link to="/notifications" className="btn btn-outline btn-sm relative">
+                <BellIcon className="w-4 h-4 mr-2" />
+                Notifications
+                {friends.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-primary text-primary-content text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {friends.length}
+                  </span>
+                )}
+              </Link>
             </div>
-          )}
-        </section>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content opacity-50 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search people, languages, or interests..."
+                  className="input input-bordered w-full pl-10 pr-4 bg-base-100"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`btn btn-outline ${showFilters ? "btn-active" : ""}`}
+              >
+                <FilterIcon className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Filters Panel */}
+            {showFilters && (
+              <div className="mt-4 p-4 bg-base-100 rounded-xl border border-base-300">
+                <div className="flex flex-wrap gap-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Language</span>
+                    </label>
+                    <select className="select select-bordered w-full max-w-xs">
+                      <option>All Languages</option>
+                      <option>English</option>
+                      <option>Spanish</option>
+                      <option>French</option>
+                      <option>German</option>
+                    </select>
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Location</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="City, Country"
+                      className="input input-bordered w-full max-w-xs"
+                    />
+                  </div>
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Status</span>
+                    </label>
+                    <select className="select select-bordered w-full max-w-xs">
+                      <option>All Users</option>
+                      <option>Online Now</option>
+                      <option>Recently Active</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Stories Section */}
+        <StoriesBar />
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Professional Feed */}
+          <div className="lg:col-span-2">
+            <div className="bg-base-100 rounded-2xl p-6 shadow-sm border border-base-300">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Your Feed</h2>
+                <div className="flex items-center gap-2 text-sm text-base-content opacity-70">
+                  <UsersIcon className="w-4 h-4" />
+                  <span>{friends.length + recommendedUsers.length} connections</span>
+                </div>
+              </div>
+              <ProfessionalFeed />
+            </div>
+          </div>
+
+          {/* Right Column - Quick Actions & Stats */}
+          <div className="space-y-6">
+            {/* Quick Stats */}
+            <div className="bg-base-100 rounded-2xl p-6 shadow-sm border border-base-300">
+              <h3 className="text-lg font-semibold mb-4">Your Progress</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-base-content opacity-70">Friends</span>
+                  <span className="font-semibold">{friends.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-base-content opacity-70">Stories Shared</span>
+                  <span className="font-semibold">0</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-base-content opacity-70">Messages Sent</span>
+                  <span className="font-semibold">0</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-base-content opacity-70">Video Calls</span>
+                  <span className="font-semibold">0</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-base-100 rounded-2xl p-6 shadow-sm border border-base-300">
+              <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <Link to="/friends" className="btn btn-outline w-full justify-start">
+                  <UsersIcon className="w-4 h-4 mr-2" />
+                  Manage Friends
+                </Link>
+                <Link to="/notifications" className="btn btn-outline w-full justify-start">
+                  <BellIcon className="w-4 h-4 mr-2" />
+                  View Notifications
+                </Link>
+                <button className="btn btn-primary w-full">
+                  Start Video Call
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Friends */}
+            {friends.length > 0 && (
+              <div className="bg-base-100 rounded-2xl p-6 shadow-sm border border-base-300">
+                <h3 className="text-lg font-semibold mb-4">Recent Friends</h3>
+                <div className="space-y-3">
+                  {friends.slice(0, 3).map((friend) => (
+                    <div key={friend._id} className="flex items-center gap-3">
+                      <div className="avatar">
+                        <div className="w-10 rounded-full">
+                          <img src={friend.profilePic || "/default-avatar.png"} alt={friend.fullName} />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{friend.fullName}</p>
+                        <p className="text-xs text-base-content opacity-70">
+                          {friend.nativeLanguage}
+                        </p>
+                      </div>
+                      <div className="w-2 h-2 bg-success rounded-full"></div>
+                    </div>
+                  ))}
+                  {friends.length > 3 && (
+                    <Link to="/friends" className="text-primary text-sm hover:underline">
+                      View all {friends.length} friends
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

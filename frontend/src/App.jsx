@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router";
 import FriendsPage from "./pages/FriendsPage.jsx";
+import GroupsPage from "./pages/GroupsPage.jsx";
 
 import HomePage from "./pages/HomePage.jsx";
 import SignUpPage from "./pages/SignUpPage.jsx";
@@ -130,17 +131,30 @@ const App = () => {
           }
         />
         <Route
-  path="/friends"
-  element={
-    isAuthenticated && isOnboarded ? (
-      <Layout showSidebar={true}>
-        <FriendsPage />
-      </Layout>
-    ) : (
-      <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
-    )
-  }
-/>
+          path="/friends"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <FriendsPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
+          path="/groups"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <GroupsPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
 
       </Routes>
 

@@ -63,3 +63,87 @@ export async function getStreamToken() {
   const response = await axiosInstance.get("/chat/token");
   return response.data;
 }
+
+// Story API functions
+export async function createStory(storyData) {
+  const response = await axiosInstance.post("/stories", storyData);
+  return response.data;
+}
+
+export async function uploadStoryMedia(file) {
+  const formData = new FormData();
+  formData.append("media", file);
+  
+  const response = await axiosInstance.post("/stories/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+}
+
+export async function getStoriesFeed() {
+  const response = await axiosInstance.get("/stories/feed");
+  return response.data;
+}
+
+export async function getMyStories() {
+  const response = await axiosInstance.get("/stories/my-stories");
+  return response.data;
+}
+
+export async function viewStory(storyId) {
+  const response = await axiosInstance.put(`/stories/${storyId}/view`);
+  return response.data;
+}
+
+export async function deleteStory(storyId) {
+  const response = await axiosInstance.delete(`/stories/${storyId}`);
+  return response.data;
+}
+
+// Group API functions
+export async function createGroup(groupData) {
+  const response = await axiosInstance.post("/groups", groupData);
+  return response.data;
+}
+
+export async function getMyGroups() {
+  const response = await axiosInstance.get("/groups/my-groups");
+  return response.data;
+}
+
+export async function getPublicGroups(params = {}) {
+  const response = await axiosInstance.get("/groups/public", { params });
+  return response.data;
+}
+
+export async function getGroupDetails(groupId) {
+  const response = await axiosInstance.get(`/groups/${groupId}`);
+  return response.data;
+}
+
+export async function joinGroup(groupId) {
+  const response = await axiosInstance.post(`/groups/${groupId}/join`);
+  return response.data;
+}
+
+export async function leaveGroup(groupId) {
+  const response = await axiosInstance.post(`/groups/${groupId}/leave`);
+  return response.data;
+}
+
+export async function inviteToGroup(groupId, userId) {
+  const response = await axiosInstance.post(`/groups/${groupId}/invite`, { userId });
+  return response.data;
+}
+
+export async function updateGroupSettings(groupId, settings) {
+  const response = await axiosInstance.put(`/groups/${groupId}/settings`, settings);
+  return response.data;
+}
+
+export async function deleteGroup(groupId) {
+  const response = await axiosInstance.delete(`/groups/${groupId}`);
+  return response.data;
+}
