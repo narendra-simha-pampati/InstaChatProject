@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
-import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon, SettingsIcon, MessageSquareIcon } from "lucide-react";
+import { BellIcon, HomeIcon, ShipWheelIcon, UsersIcon, SettingsIcon, MessageSquareIcon, FileTextIcon, MessageCircle } from "lucide-react";
 
 const Sidebar = () => {
   const { authUser } = useAuthUser();
@@ -53,6 +53,16 @@ const Sidebar = () => {
         </Link>
 
         <Link
+          to="/chats"
+          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
+            currentPath === "/chats" ? "btn-active" : ""
+          }`}
+        >
+          <MessageCircle className="size-5 text-base-content opacity-70" />
+          <span>Chats</span>
+        </Link>
+
+        <Link
           to="/notifications"
           className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
             currentPath === "/notifications" ? "btn-active" : ""
@@ -71,6 +81,17 @@ const Sidebar = () => {
         >
           <SettingsIcon className="size-5 text-base-content opacity-70" />
           <span>Settings</span>
+        </Link>
+
+        {/* NEW ABOUT BUTTON */}
+        <Link
+          to="/about"
+          className={`btn btn-ghost justify-start w-full gap-3 px-3 normal-case ${
+            currentPath === "/about" ? "btn-active" : ""
+          }`}
+        >
+          <FileTextIcon className="size-5 text-base-content opacity-70" />
+          <span>About</span>
         </Link>
       </nav>
 

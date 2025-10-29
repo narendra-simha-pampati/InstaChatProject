@@ -1,7 +1,7 @@
 import express from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
-import { login, logout, onboard, signup } from "../controllers/auth.controller.js";
+import { login, logout, onboard, signup, verifyEmailOtp, resendEmailOtp } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -10,6 +10,8 @@ const router = express.Router();
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/verify-otp", verifyEmailOtp);
+router.post("/resend-otp", resendEmailOtp);
 
 router.post("/onboarding", protectRoute, onboard);
 
@@ -34,15 +36,22 @@ router.get(
     session: true,
   }),
   (req, res) => {
-    // Generate JWT for the logged-in user
+    // Generate JWT and set as httpOnly cookie to match protectRoute expectations
     const token = jwt.sign(
-      { id: req.user._id },
+      { userId: req.user._id },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "7d" }
     );
 
-    // Redirect to frontend with token in query params
-    res.redirect(`http://localhost:5173?token=${token}`);
+    res.cookie("jwt", token, {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    // Redirect to frontend app root
+    res.redirect("http://localhost:5173/");
   }
 );
 

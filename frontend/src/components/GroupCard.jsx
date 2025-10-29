@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { UsersIcon, LockIcon, MessageCircleIcon, SettingsIcon, UserPlusIcon, CrownIcon, ShieldIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { joinGroup, leaveGroup } from "../lib/api";
@@ -7,6 +8,7 @@ import toast from "react-hot-toast";
 const GroupCard = ({ group, isMember = false, onJoin, onLeave, onSettings }) => {
   const [isHovered, setIsHovered] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { mutate: joinGroupMutation, isPending: isJoining } = useMutation({
     mutationFn: () => joinGroup(group._id),
@@ -90,6 +92,13 @@ const GroupCard = ({ group, isMember = false, onJoin, onLeave, onSettings }) => 
           <div className="flex items-center gap-2">
             {isMember ? (
               <>
+                <button
+                  onClick={() => navigate(`/chat/group-${group._id}`)}
+                  className="btn btn-primary btn-sm"
+                  title="Open Chat"
+                >
+                  <MessageCircleIcon className="w-4 h-4 mr-1" /> Chat
+                </button>
                 <button
                   onClick={() => onSettings?.(group)}
                   className="btn btn-ghost btn-sm"

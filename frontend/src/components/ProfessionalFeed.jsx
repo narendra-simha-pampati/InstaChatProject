@@ -1,17 +1,50 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { HeartIcon, MessageCircleIcon, ShareIcon, MoreHorizontalIcon } from "lucide-react";
-import { getUserFriends, getRecommendedUsers } from "../lib/api";
-import FriendCard, { getLanguageFlag } from "./FriendCard";
-import { capitialize } from "../lib/utils";
 
-const FeedCard = ({ user, type = "recommendation" }) => {
+
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { HeartIcon, MessageCircleIcon, ShareIcon, MoreHorizontalIcon, MapPinIcon, UserPlusIcon, CheckCircleIcon } from "lucide-react";
+import { getUserFriends, getRecommendedUsers, sendFriendRequest, getOutgoingFriendReqs } from "../lib/api";
+import FriendCard from "./FriendCard";
+import MutualFriends from "./MutualFriends";
+import toast from "react-hot-toast";
+
+const FeedCard = ({ user, type = "recommendation", onSendFriendRequest, hasRequestBeenSent, onVideoCall }) => {
   const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 50));
+  const [likeCount, setLikeCount] = useState(0); // Start with 0 instead of random
 
   const handleLike = () => {
     setIsLiked(!isLiked);
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+  };
+
+  const handleSendFriendRequest = () => {
+    onSendFriendRequest(user._id);
+  };
+
+  const handleChat = () => {
+    // Navigate to chat with this user
+    window.location.href = `/chat/${user._id}`;
+  };
+
+  const handleShare = () => {
+    // Share user profile
+    if (navigator.share) {
+      navigator.share({
+        title: `${user.fullName}'s Profile`,
+        text: `Check out ${user.fullName}'s profile on InstaChat!`,
+        url: window.location.origin + `/profile/${user._id}`,
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(`${user.fullName}'s profile: ${window.location.origin}/profile/${user._id}`);
+      toast.success("Profile link copied to clipboard!");
+    }
+  };
+
+  const handleVideoCall = () => {
+    if (onVideoCall) {
+      onVideoCall(user);
+    }
   };
 
   return (
@@ -30,13 +63,10 @@ const FeedCard = ({ user, type = "recommendation" }) => {
               <div className="flex items-center gap-2 text-sm text-base-content opacity-70">
                 {user.location && (
                   <span className="flex items-center gap-1">
-                    📍 {user.location}
+                    <MapPinIcon className="w-3 h-3" />
+                    {user.location}
                   </span>
                 )}
-                <span className="flex items-center gap-1">
-                  {getLanguageFlag(user.nativeLanguage)}
-                  {capitialize(user.nativeLanguage)}
-                </span>
               </div>
             </div>
           </div>
@@ -54,21 +84,13 @@ const FeedCard = ({ user, type = "recommendation" }) => {
           </p>
         )}
         
-        {/* Language badges */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {user.nativeLanguage && (
-            <span className="badge badge-secondary">
-              {getLanguageFlag(user.nativeLanguage)}
-              Native: {capitialize(user.nativeLanguage)}
-            </span>
-          )}
-          {user.learningLanguage && (
-            <span className="badge badge-outline">
-              Learning: {capitialize(user.learningLanguage)}
-            </span>
-          )}
-        </div>
-
+        {/* Mutual Friends */}
+        {type === "recommendation" && (
+          <div className="mb-4">
+            <MutualFriends userId={user._id} />
+          </div>
+        )}
+        
         {/* Action buttons */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -82,20 +104,52 @@ const FeedCard = ({ user, type = "recommendation" }) => {
               <span className="text-sm">{likeCount}</span>
             </button>
             
-            <button className="flex items-center gap-2 text-base-content opacity-70 hover:text-primary transition-colors">
+            <button 
+              onClick={handleChat}
+              className="flex items-center gap-2 text-base-content opacity-70 hover:text-primary transition-colors"
+            >
               <MessageCircleIcon className="w-5 h-5" />
               <span className="text-sm">Chat</span>
             </button>
             
-            <button className="flex items-center gap-2 text-base-content opacity-70 hover:text-secondary transition-colors">
+            <button 
+              onClick={handleShare}
+              className="flex items-center gap-2 text-base-content opacity-70 hover:text-secondary transition-colors"
+            >
               <ShareIcon className="w-5 h-5" />
               <span className="text-sm">Share</span>
             </button>
           </div>
           
           {type === "recommendation" && (
-            <button className="btn btn-primary btn-sm">
-              Connect
+            <button 
+              onClick={handleSendFriendRequest}
+              className={`btn btn-sm ${
+                hasRequestBeenSent ? "btn-disabled" : "btn-primary"
+              }`}
+              disabled={hasRequestBeenSent}
+            >
+              {hasRequestBeenSent ? (
+                <>
+                  <CheckCircleIcon className="w-4 h-4 mr-1" />
+                  Request Sent
+                </>
+              ) : (
+                <>
+                  <UserPlusIcon className="w-4 h-4 mr-1" />
+                  Send Friend Request
+                </>
+              )}
+            </button>
+          )}
+          
+          {type === "friend" && (
+            <button 
+              onClick={handleVideoCall}
+              className="btn btn-primary btn-sm"
+            >
+              <MessageCircleIcon className="w-4 h-4 mr-1" />
+              Video Call
             </button>
           )}
         </div>
@@ -104,7 +158,10 @@ const FeedCard = ({ user, type = "recommendation" }) => {
   );
 };
 
-const ProfessionalFeed = () => {
+const ProfessionalFeed = ({ onVideoCall, searchQuery = "" }) => {
+  const queryClient = useQueryClient();
+  const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
+
   const { data: friends = [], isLoading: loadingFriends } = useQuery({
     queryKey: ["friends"],
     queryFn: getUserFriends,
@@ -115,7 +172,45 @@ const ProfessionalFeed = () => {
     queryFn: getRecommendedUsers,
   });
 
+  const { data: outgoingFriendReqs } = useQuery({
+    queryKey: ["outgoingFriendReqs"],
+    queryFn: getOutgoingFriendReqs,
+  });
+
+  const { mutate: sendRequestMutation, isPending } = useMutation({
+    mutationFn: sendFriendRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] });
+      toast.success("Friend request sent successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Failed to send friend request");
+    },
+  });
+
   const [activeTab, setActiveTab] = useState("friends");
+
+  // Update outgoing requests IDs
+  useEffect(() => {
+    const outgoingIds = new Set();
+    if (outgoingFriendReqs && outgoingFriendReqs.length > 0) {
+      outgoingFriendReqs.forEach((req) => {
+        outgoingIds.add(req.recipient._id);
+      });
+      setOutgoingRequestsIds(outgoingIds);
+    }
+  }, [outgoingFriendReqs]);
+
+  const handleSendFriendRequest = (userId) => {
+    sendRequestMutation(userId);
+  };
+
+  // Filter users based on search query
+  const filteredRecommendedUsers = recommendedUsers.filter(user =>
+    user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (user.location && user.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (user.bio && user.bio.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   if (loadingFriends || loadingUsers) {
     return (
@@ -183,7 +278,12 @@ const ProfessionalFeed = () => {
             </div>
           ) : (
             friends.map((friend) => (
-              <FeedCard key={friend._id} user={friend} type="friend" />
+              <FeedCard 
+                key={friend._id} 
+                user={friend} 
+                type="friend" 
+                onVideoCall={onVideoCall}
+              />
             ))
           )
         ) : (
@@ -195,9 +295,18 @@ const ProfessionalFeed = () => {
               </p>
             </div>
           ) : (
-            recommendedUsers.map((user) => (
-              <FeedCard key={user._id} user={user} type="recommendation" />
-            ))
+            filteredRecommendedUsers.map((user) => {
+              const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
+              return (
+                <FeedCard 
+                  key={user._id} 
+                  user={user} 
+                  type="recommendation" 
+                  onSendFriendRequest={handleSendFriendRequest}
+                  hasRequestBeenSent={hasRequestBeenSent}
+                />
+              );
+            })
           )
         )}
       </div>

@@ -1,9 +1,20 @@
-import { PaletteIcon } from "lucide-react";
+import { useState } from "react";
+import { PaletteIcon, ChevronRightIcon } from "lucide-react";
 import { useThemeStore } from "../store/useThemeStore";
-import { THEMES } from "../constants";
+import { THEMES, CUSTOM_THEMES } from "../constants";
 
 const ThemeSelector = () => {
   const { theme, setTheme } = useThemeStore();
+  const [showCustomThemes, setShowCustomThemes] = useState(false);
+
+  const handleThemeSelect = (themeName) => {
+    if (themeName === "custom") {
+      setShowCustomThemes(true);
+    } else {
+      setTheme(themeName);
+      setShowCustomThemes(false);
+    }
+  };
 
   return (
     <div className="dropdown dropdown-end">
@@ -29,7 +40,7 @@ const ThemeSelector = () => {
                   : "hover:bg-base-content/5"
               }
             `}
-              onClick={() => setTheme(themeOption.name)}
+              onClick={() => handleThemeSelect(themeOption.name)}
             >
               <PaletteIcon className="size-4" />
               <span className="text-sm font-medium">{themeOption.label}</span>
@@ -43,8 +54,45 @@ const ThemeSelector = () => {
                   />
                 ))}
               </div>
+              {themeOption.name === "custom" && (
+                <ChevronRightIcon className="size-4 ml-1" />
+              )}
             </button>
           ))}
+          
+          {/* Custom Theme Submenu */}
+          {showCustomThemes && (
+            <div className="ml-4 border-l-2 border-base-content/20 pl-2 mt-2">
+              <div className="text-xs font-semibold text-base-content/70 mb-2 px-2">
+                Choose Custom Theme:
+              </div>
+              {CUSTOM_THEMES.map((customTheme) => (
+                <button
+                  key={customTheme.name}
+                  className={`
+                  w-full px-3 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm
+                  ${
+                    theme === customTheme.name
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-base-content/5"
+                  }
+                `}
+                  onClick={() => setTheme(customTheme.name)}
+                >
+                  <span className="font-medium">{customTheme.label}</span>
+                  <div className="ml-auto flex gap-1">
+                    {customTheme.colors.map((color, i) => (
+                      <span
+                        key={i}
+                        className="size-1.5 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

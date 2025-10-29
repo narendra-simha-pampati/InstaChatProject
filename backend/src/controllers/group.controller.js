@@ -1,5 +1,6 @@
 import Group from "../models/Group.js";
 import User from "../models/User.js";
+import { ensureGroupChannel, addMemberToGroupChannel, removeMemberFromGroupChannel } from "../lib/stream.js";
 
 // Create a new group
 export async function createGroup(req, res) {
@@ -36,6 +37,19 @@ export async function createGroup(req, res) {
     // Populate creator details
     await group.populate("creator", "fullName profilePic");
     await group.populate("members.user", "fullName profilePic");
+
+    // Ensure Stream group channel exists with creator as member
+    try {
+      const memberIds = group.members.filter(m => m.isActive).map(m => m.user.toString());
+      await ensureGroupChannel({
+        groupId: group._id.toString(),
+        name: group.name,
+        image: group.avatar || undefined,
+        memberIds,
+      });
+    } catch (e) {
+      console.warn("Failed to ensure Stream group channel on create:", e?.message || e);
+    }
 
     res.status(201).json(group);
   } catch (error) {
@@ -162,6 +176,13 @@ export async function joinGroup(req, res) {
 
     await group.addMember(userId, "member");
 
+    // Add member to Stream group channel
+    try {
+      await addMemberToGroupChannel({ groupId, userId });
+    } catch (e) {
+      console.warn("Failed to add member to Stream group channel:", e?.message || e);
+    }
+
     res.status(200).json({ message: "Successfully joined the group" });
   } catch (error) {
     console.error("Error in joinGroup controller", error.message);
@@ -196,6 +217,13 @@ export async function leaveGroup(req, res) {
     }
 
     await group.removeMember(userId);
+
+    // Remove member from Stream group channel
+    try {
+      await removeMemberFromGroupChannel({ groupId, userId });
+    } catch (e) {
+      console.warn("Failed to remove member from Stream group channel:", e?.message || e);
+    }
 
     res.status(200).json({ message: "Successfully left the group" });
   } catch (error) {
@@ -238,6 +266,13 @@ export async function inviteToGroup(req, res) {
     }
 
     await group.addMember(inviteeId, "member");
+
+    // Add invited member to Stream group channel
+    try {
+      await addMemberToGroupChannel({ groupId, userId: inviteeId });
+    } catch (e) {
+      console.warn("Failed to add invited member to Stream channel:", e?.message || e);
+    }
 
     res.status(200).json({ message: "User successfully invited to the group" });
   } catch (error) {

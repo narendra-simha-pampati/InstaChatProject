@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import { getFileInfo } from "../lib/upload.js";
 
 export async function getRecommendedUsers(req, res) {
   try {
@@ -24,7 +25,7 @@ export async function getMyFriends(req, res) {
   try {
     const user = await User.findById(req.user.id)
       .select("friends")
-      .populate("friends", "fullName profilePic nativeLanguage learningLanguage");
+      .populate("friends", "fullName profilePic location bio");
 
     res.status(200).json(user.friends);
   } catch (error) {
@@ -119,7 +120,7 @@ export async function getFriendRequests(req, res) {
     const incomingReqs = await FriendRequest.find({
       recipient: req.user.id,
       status: "pending",
-    }).populate("sender", "fullName profilePic nativeLanguage learningLanguage");
+    }).populate("sender", "fullName profilePic location bio");
 
     const acceptedReqs = await FriendRequest.find({
       sender: req.user.id,
@@ -138,11 +139,114 @@ export async function getOutgoingFriendReqs(req, res) {
     const outgoingRequests = await FriendRequest.find({
       sender: req.user.id,
       status: "pending",
-    }).populate("recipient", "fullName profilePic nativeLanguage learningLanguage");
+    }).populate("recipient", "fullName profilePic location bio");
 
     res.status(200).json(outgoingRequests);
   } catch (error) {
     console.log("Error in getOutgoingFriendReqs controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function getUserProfile(req, res) {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId)
+      .select("fullName profilePic bio location nativeLanguage learningLanguage friends createdAt");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in getUserProfile controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function uploadProfilePicture(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const userId = req.user.id;
+    const fileInfo = getFileInfo(req.file);
+    
+    // Update user's profile picture
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: fileInfo.url },
+      { new: true }
+    ).select("fullName profilePic email");
+
+    res.status(200).json({
+      message: "Profile picture updated successfully",
+      profilePic: fileInfo.url,
+      user,
+    });
+  } catch (error) {
+    console.error("Error in uploadProfilePicture controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function getMutualFriends(req, res) {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user.id;
+
+    // Get current user's friends
+    const currentUser = await User.findById(currentUserId).select("friends");
+    const currentUserFriends = currentUser.friends;
+
+    // Get target user's friends
+    const targetUser = await User.findById(userId).select("friends");
+    const targetUserFriends = targetUser.friends;
+
+    // Find mutual friends
+    const mutualFriendIds = currentUserFriends.filter(friendId =>
+      targetUserFriends.some(targetFriendId =>
+        friendId.toString() === targetFriendId.toString()
+      )
+    );
+
+    // Get mutual friends details
+    const mutualFriends = await User.find({
+      _id: { $in: mutualFriendIds }
+    }).select("fullName profilePic");
+
+    res.status(200).json(mutualFriends);
+  } catch (error) {
+    console.error("Error in getMutualFriends controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function getNotificationPreferences(req, res) {
+  try {
+    const user = await User.findById(req.user.id).select("notificationPreferences");
+    res.status(200).json(user.notificationPreferences);
+  } catch (error) {
+    console.error("Error in getNotificationPreferences controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function updateNotificationPreferences(req, res) {
+  try {
+    const { preferences } = req.body;
+    const userId = req.user.id;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { notificationPreferences: preferences },
+      { new: true }
+    ).select("notificationPreferences");
+
+    res.status(200).json({
+      message: "Notification preferences updated successfully",
+      preferences: user.notificationPreferences,
+    });
+  } catch (error) {
+    console.error("Error in updateNotificationPreferences controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }

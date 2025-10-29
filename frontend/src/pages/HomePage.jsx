@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { BellIcon, UsersIcon, SearchIcon, FilterIcon } from "lucide-react";
+import { BellIcon, UsersIcon, SearchIcon, FilterIcon, VideoIcon, MessageCircle } from "lucide-react";
 import StoriesBar from "../components/StoriesBar";
 import ProfessionalFeed from "../components/ProfessionalFeed";
 import FriendCard from "../components/FriendCard";
 import NoFriendsFound from "../components/NoFriendsFound";
+import VideoCallModal from "../components/VideoCallModal";
 import { useQuery } from "@tanstack/react-query";
 import { getUserFriends, getRecommendedUsers } from "../lib/api";
 
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [showVideoCallModal, setShowVideoCallModal] = useState(false);
 
   const { data: friends = [], isLoading: loadingFriends } = useQuery({
     queryKey: ["friends"],
@@ -21,6 +23,19 @@ const HomePage = () => {
     queryKey: ["users"],
     queryFn: getRecommendedUsers,
   });
+
+  const handleStartVideoCall = (friend) => {
+    // Navigate to video call page with friend ID
+    window.location.href = `/call/${friend._id}`;
+  };
+
+  const handleVideoCallClick = () => {
+    if (friends.length === 0) {
+      alert("You need to add friends first to start a video call!");
+      return;
+    }
+    setShowVideoCallModal(true);
+  };
 
   return (
     <div className="min-h-screen bg-base-200">
@@ -128,7 +143,7 @@ const HomePage = () => {
                   <span>{friends.length + recommendedUsers.length} connections</span>
                 </div>
               </div>
-              <ProfessionalFeed />
+              <ProfessionalFeed onVideoCall={handleStartVideoCall} searchQuery={searchQuery} />
             </div>
           </div>
 
@@ -161,6 +176,10 @@ const HomePage = () => {
             <div className="bg-base-100 rounded-2xl p-6 shadow-sm border border-base-300">
               <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
               <div className="space-y-3">
+                <Link to="/chats" className="btn btn-primary w-full justify-start">
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Start Chat
+                </Link>
                 <Link to="/friends" className="btn btn-outline w-full justify-start">
                   <UsersIcon className="w-4 h-4 mr-2" />
                   Manage Friends
@@ -169,7 +188,11 @@ const HomePage = () => {
                   <BellIcon className="w-4 h-4 mr-2" />
                   View Notifications
                 </Link>
-                <button className="btn btn-primary w-full">
+                <button 
+                  onClick={handleVideoCallClick}
+                  className="btn btn-outline w-full justify-start"
+                >
+                  <VideoIcon className="w-4 h-4 mr-2" />
                   Start Video Call
                 </button>
               </div>
@@ -207,6 +230,13 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Video Call Modal */}
+      <VideoCallModal
+        isOpen={showVideoCallModal}
+        onClose={() => setShowVideoCallModal(false)}
+        onStartCall={handleStartVideoCall}
+      />
     </div>
   );
 };

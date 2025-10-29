@@ -147,3 +147,49 @@ export async function deleteGroup(groupId) {
   const response = await axiosInstance.delete(`/groups/${groupId}`);
   return response.data;
 }
+
+export async function uploadProfilePicture(file) {
+  const formData = new FormData();
+  formData.append("profilePic", file);
+
+  const response = await axiosInstance.post("/users/profile-picture", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+}
+
+export async function getMutualFriends(userId) {
+  const response = await axiosInstance.get(`/users/${userId}/mutual-friends`);
+  return response.data;
+}
+
+export async function getUserProfile(userId) {
+  const response = await axiosInstance.get(`/users/${userId}/profile`);
+  return response.data;
+}
+
+// Notification preferences
+export async function getNotificationPreferences() {
+  const response = await axiosInstance.get("/users/notification-preferences");
+  return response.data;
+}
+
+export async function updateNotificationPreferences(preferences) {
+  const response = await axiosInstance.put("/users/notification-preferences", {
+    preferences,
+  });
+  return response.data;
+}
+
+// Email verification
+export async function verifyEmailOtp({ email, code }) {
+  const response = await axiosInstance.post("/auth/verify-otp", { email, code });
+  return response.data;
+}
+
+export async function resendEmailOtp({ email }) {
+  const response = await axiosInstance.post("/auth/resend-otp", { email });
+  return response.data;
+}

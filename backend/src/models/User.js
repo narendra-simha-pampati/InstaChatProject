@@ -29,13 +29,19 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    nativeLanguage: {
-      type: String,
-      default: "",
-    },
     location: {
       type: String,
       default: "",
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationOTP: {
+      type: String,
+    },
+    emailVerificationExpires: {
+      type: Date,
     },
     isOnboarded: {
       type: Boolean,
@@ -47,6 +53,40 @@ const userSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    notificationPreferences: {
+      emailNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      pushNotifications: {
+        type: Boolean,
+        default: false,
+      },
+      friendRequests: {
+        type: Boolean,
+        default: true,
+      },
+      storyViews: {
+        type: Boolean,
+        default: true,
+      },
+      groupInvites: {
+        type: Boolean,
+        default: true,
+      },
+      videoCalls: {
+        type: Boolean,
+        default: true,
+      },
+      showUnreadBadges: {
+        type: Boolean,
+        default: true,
+      },
+      showLastMessagePreview: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
   { timestamps: true }
 );

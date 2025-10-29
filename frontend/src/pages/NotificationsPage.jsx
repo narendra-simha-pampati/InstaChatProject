@@ -55,14 +55,16 @@ const NotificationsPage = () => {
                             </div>
                             <div>
                               <h3 className="font-semibold">{request.sender.fullName}</h3>
-                              <div className="flex flex-wrap gap-1.5 mt-1">
-                                <span className="badge badge-secondary badge-sm">
-                                  Native: {request.sender.nativeLanguage}
-                                </span>
-                                <span className="badge badge-outline badge-sm">
-                                  Learning: {request.sender.learningLanguage}
-                                </span>
-                              </div>
+                              {request.sender.location && (
+                                <p className="text-sm text-base-content opacity-70 mt-1">
+                                  📍 {request.sender.location}
+                                </p>
+                              )}
+                              {request.sender.bio && (
+                                <p className="text-sm text-base-content opacity-70 mt-1 line-clamp-2">
+                                  {request.sender.bio}
+                                </p>
+                              )}
                             </div>
                           </div>
 
