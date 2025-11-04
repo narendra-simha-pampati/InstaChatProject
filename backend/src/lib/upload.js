@@ -54,7 +54,8 @@ export const uploadSingle = upload.single("media");
 // Helper function to get file URL
 export const getFileUrl = (filename) => {
   if (!filename) return "";
-  return `/uploads/stories/${filename}`;
+  const baseUrl = process.env.BASE_URL || "http://localhost:5001";
+  return `${baseUrl}/uploads/stories/${filename}`;
 };
 
 // Helper function to delete file

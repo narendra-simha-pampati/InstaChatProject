@@ -6,7 +6,10 @@ const useSignUp = () => {
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: signup,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+    onSuccess: () => {
+      // Do not invalidate authUser here; user won't be authenticated until OTP verified
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+    },
   });
 
   return { isPending, error, signupMutation: mutate };

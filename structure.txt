@@ -1,0 +1,37 @@
+.
+├── backend
+│   ├── node_modules
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── src
+│   ├── uploads
+│   └── venv
+├── frontend
+│   ├── dist
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── node_modules
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── public
+│   ├── README.md
+│   ├── src
+│   ├── tailwind.config.js
+│   └── vite.config.js
+├── node_modules
+│   ├── base64url
+│   ├── oauth
+│   ├── passport
+│   ├── passport-google-oauth20
+│   ├── passport-oauth2
+│   ├── passport-strategy
+│   ├── pause
+│   ├── uid2
+│   └── utils-merge
+├── package-lock.json
+├── package.json
+├── README.md
+└── structure.txt
+
+21 directories, 14 files

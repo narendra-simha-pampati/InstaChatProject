@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import useSignUp from "../hooks/useSignUp";
 
 const SignUpPage = () => {
@@ -9,11 +9,17 @@ const SignUpPage = () => {
     password: "",
   });
 
+  const navigate = useNavigate();
   const { isPending, error, signupMutation } = useSignUp();
 
   const handleSignup = (e) => {
     e.preventDefault();
-    signupMutation(signupData);
+    signupMutation(signupData, {
+      onSuccess: (res) => {
+        const email = signupData.email;
+        navigate("/verify-email", { state: { email } });
+      },
+    });
   };
 
   return (

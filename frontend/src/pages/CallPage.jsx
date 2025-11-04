@@ -26,6 +26,9 @@ const CallPage = () => {
   const [client, setClient] = useState(null);
   const [call, setCall] = useState(null);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [prefAudio, setPrefAudio] = useState(true);
+  const [prefVideo, setPrefVideo] = useState(true);
+  const [showJoinOptions, setShowJoinOptions] = useState(true);
 
   const { authUser, isLoading } = useAuthUser();
 
@@ -36,12 +39,10 @@ const CallPage = () => {
   });
 
   useEffect(() => {
-    const initCall = async () => {
-      if (!tokenData.token || !authUser || !callId) return;
+    const initClient = async () => {
+      if (!tokenData?.token || !authUser || !callId) return;
 
       try {
-        console.log("Initializing Stream video client...");
-
         const user = {
           id: authUser._id,
           name: authUser.fullName,
@@ -55,41 +56,58 @@ const CallPage = () => {
         });
 
         const callInstance = videoClient.call("default", callId);
-
-        await callInstance.join({ create: true });
-
-        console.log("Joined call successfully");
-
         setClient(videoClient);
         setCall(callInstance);
       } catch (error) {
-        console.error("Error joining call:", error);
-        toast.error("Could not join the call. Please try again.");
-      } finally {
+        console.error("Error initializing call client:", error);
+        toast.error("Could not initialize the call. Please try again.");
         setIsConnecting(false);
       }
     };
 
-    initCall();
+    initClient();
   }, [tokenData, authUser, callId]);
 
-  if (isLoading || isConnecting) return <PageLoader />;
+  const handleJoin = async (audio, video) => {
+    if (!call) return;
+    setIsConnecting(true);
+    try {
+      await call.join({ create: true, audio, video });
+    } catch (error) {
+      console.error("Error joining call:", error);
+      toast.error("Could not join the call. Please try again.");
+    } finally {
+      setIsConnecting(false);
+      setShowJoinOptions(false);
+    }
+  };
+
+  if (isLoading || (isConnecting && !showJoinOptions)) return <PageLoader />;
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center">
-      <div className="relative">
-        {client && call ? (
-          <StreamVideo client={client}>
-            <StreamCall call={call}>
+    <div className="h-screen w-screen fixed inset-0 z-50 bg-black">
+      {client && call ? (
+        <StreamVideo client={client}>
+          <StreamCall call={call}>
+            {showJoinOptions ? (
+              <PreJoin
+                prefAudio={prefAudio}
+                prefVideo={prefVideo}
+                setPrefAudio={setPrefAudio}
+                setPrefVideo={setPrefVideo}
+                onJoin={() => handleJoin(prefAudio, prefVideo)}
+                onJoinAudioOnly={() => handleJoin(true, false)}
+              />
+            ) : (
               <CallContent />
-            </StreamCall>
-          </StreamVideo>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p>Could not initialize call. Please refresh or try again later.</p>
-          </div>
-        )}
-      </div>
+            )}
+          </StreamCall>
+        </StreamVideo>
+      ) : (
+        <div className="flex items-center justify-center h-full text-white">
+          <p>Could not initialize call. Please refresh or try again later.</p>
+        </div>
+      )}
     </div>
   );
 };
@@ -107,6 +125,30 @@ const CallContent = () => {
       <SpeakerLayout />
       <CallControls />
     </StreamTheme>
+  );
+};
+
+const PreJoin = ({ prefAudio, prefVideo, setPrefAudio, setPrefVideo, onJoin, onJoinAudioOnly }) => {
+  return (
+    <div className="h-screen w-screen flex items-center justify-center bg-black">
+      <div className="bg-gray-800 border border-gray-600 rounded-2xl p-8 w-full max-w-md text-white">
+        <h2 className="text-2xl font-semibold mb-6 text-center">Join Call</h2>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <span className="text-lg">Microphone</span>
+            <input type="checkbox" className="toggle toggle-primary" checked={prefAudio} onChange={(e) => setPrefAudio(e.target.checked)} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-lg">Camera</span>
+            <input type="checkbox" className="toggle toggle-secondary" checked={prefVideo} onChange={(e) => setPrefVideo(e.target.checked)} />
+          </div>
+          <div className="flex gap-4 pt-4">
+            <button className="btn btn-outline btn-lg flex-1 text-white border-gray-400 hover:bg-gray-700" onClick={onJoinAudioOnly}>Audio Only</button>
+            <button className="btn btn-primary btn-lg flex-1" onClick={onJoin}>Join Call</button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

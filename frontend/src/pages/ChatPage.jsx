@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 
 import ChatLoader from "../components/ChatLoader";
 import CallButton from "../components/CallButton";
+import DoodleCanvas from "../components/DoodleCanvas";
 
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
@@ -27,6 +28,7 @@ const ChatPage = () => {
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDoodleCanvas, setShowDoodleCanvas] = useState(false);
 
   const { authUser } = useAuthUser();
 
@@ -92,23 +94,57 @@ const ChatPage = () => {
     }
   };
 
+  const handleSendDoodle = (doodleDataURL) => {
+    if (channel) {
+      channel.sendMessage({
+        text: "🎨 Doodle shared!",
+        attachments: [
+          {
+            type: "image",
+            image_url: doodleDataURL,
+            fallback: "Doodle image",
+          },
+        ],
+      });
+      toast.success("Doodle sent!");
+    }
+  };
+
   if (loading || !chatClient || !channel) return <ChatLoader />;
 
   return (
-    <div className="h-[93vh]">
+    <div className="h-screen w-screen fixed inset-0 z-40 bg-white">
       <Chat client={chatClient}>
         <Channel channel={channel}>
-          <div className="w-full relative">
+          <div className="w-full h-full relative">
             <CallButton handleVideoCall={handleVideoCall} />
             <Window>
               <ChannelHeader />
               <MessageList />
-              <MessageInput focus />
+              <MessageInput focus>
+                <MessageInput.Input />
+                <MessageInput.ButtonSend />
+                <MessageInput.AttachmentButton />
+                <button
+                  onClick={() => setShowDoodleCanvas(true)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Send Doodle"
+                >
+                  🎨
+                </button>
+              </MessageInput>
             </Window>
           </div>
           <Thread />
         </Channel>
       </Chat>
+      
+      {/* Doodle Canvas Modal */}
+      <DoodleCanvas
+        isOpen={showDoodleCanvas}
+        onClose={() => setShowDoodleCanvas(false)}
+        onSendDoodle={handleSendDoodle}
+      />
     </div>
   );
 };

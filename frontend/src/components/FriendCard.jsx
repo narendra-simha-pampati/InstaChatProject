@@ -1,51 +1,51 @@
 import { Link } from "react-router";
-import { LANGUAGE_TO_FLAG } from "../constants";
 
-const FriendCard = ({ friend }) => {
+import { MapPinIcon, MessageCircleIcon, VideoIcon } from "lucide-react";
+
+const FriendCard = ({ friend, onVideoCall }) => {
   return (
     <div className="card bg-base-200 hover:shadow-md transition-shadow">
       <div className="card-body p-4">
         {/* USER INFO */}
         <div className="flex items-center gap-3 mb-3">
           <div className="avatar size-12">
-            <img src={friend.profilePic} alt={friend.fullName} />
+            <img src={friend.profilePic || "/default-avatar.png"} alt={friend.fullName} />
           </div>
-          <h3 className="font-semibold truncate">{friend.fullName}</h3>
+          <div className="flex-1">
+            <h3 className="font-semibold truncate">{friend.fullName}</h3>
+            {friend.location && (
+              <div className="flex items-center text-xs text-base-content opacity-70 mt-1">
+                <MapPinIcon className="w-3 h-3 mr-1" />
+                {friend.location}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Only show native language */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {friend.nativeLanguage && (
-            <span className="badge badge-secondary text-xs">
-              {getLanguageFlag(friend.nativeLanguage)}
-              Native: {friend.nativeLanguage}
-            </span>
-          )}
-        </div>
+        {/* Bio */}
+        {friend.bio && (
+          <p className="text-sm text-base-content opacity-70 mb-3 line-clamp-2">
+            {friend.bio}
+          </p>
+        )}
 
-        <Link to={`/chat/${friend._id}`} className="btn btn-outline w-full">
-          Message
-        </Link>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Link to={`/chat/${friend._id}`} className="btn btn-outline flex-1">
+            <MessageCircleIcon className="w-4 h-4 mr-1" />
+            Message
+          </Link>
+          <button 
+            onClick={() => onVideoCall?.(friend)}
+            className="btn btn-primary flex-1"
+          >
+            <VideoIcon className="w-4 h-4 mr-1" />
+            Call
+          </button>
+        </div>
       </div>
     </div>
   );
 };
+
 export default FriendCard;
-
-export function getLanguageFlag(language) {
-  if (!language) return null;
-
-  const langLower = language.toLowerCase();
-  const countryCode = LANGUAGE_TO_FLAG[langLower];
-
-  if (countryCode) {
-    return (
-      <img
-        src={`https://flagcdn.com/24x18/${countryCode}.png`}
-        alt={`${langLower} flag`}
-        className="h-3 mr-1 inline-block"
-      />
-    );
-  }
-  return null;
-}

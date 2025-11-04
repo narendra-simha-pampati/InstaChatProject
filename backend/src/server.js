@@ -43,7 +43,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Serve static files (for uploaded media)
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

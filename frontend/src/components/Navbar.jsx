@@ -11,6 +11,12 @@ const Navbar = () => {
 
   const { logoutMutation } = useLogout();
 
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to logout?")) {
+      logoutMutation();
+    }
+  };
+
   return (
     <nav className="bg-base-200 border-b border-base-300 sticky top-0 z-30 h-16 flex items-center">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,7 +53,7 @@ const Navbar = () => {
           </div>
 
           {/* Logout button */}
-          <button className="btn btn-ghost btn-circle" onClick={logoutMutation}>
+          <button className="btn btn-ghost btn-circle" onClick={handleLogout}>
             <LogOutIcon className="h-6 w-6 text-base-content opacity-70" />
           </button>
         </div>

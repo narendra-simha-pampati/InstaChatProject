@@ -22,6 +22,7 @@ passport.use(
             email: profile.emails[0].value,
             fullName: profile.displayName,
             profilePic: profile.photos[0].value,
+            isEmailVerified: true,
           });
         }
 

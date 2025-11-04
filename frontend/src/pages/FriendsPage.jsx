@@ -23,6 +23,11 @@ const FriendsPage = () => {
     fetchFriends();
   }, []);
 
+  const handleVideoCall = (friend) => {
+    // Navigate to video call page with friend ID
+    window.location.href = `/call/${friend._id}`;
+  };
+
   if (loading) return <p className="p-6">Loading friends...</p>;
 
   return (
@@ -33,7 +38,11 @@ const FriendsPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {friends.map((friend) => (
-            <FriendCard key={friend._id} friend={friend} />
+            <FriendCard 
+              key={friend._id} 
+              friend={friend} 
+              onVideoCall={handleVideoCall}
+            />
           ))}
         </div>
       )}

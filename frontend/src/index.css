@@ -2,31 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-.str-chat__channel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(to bottom, #c9e8c9, #b7e7bb);
-  height: 100%;
+/* custom styles */
+
+/* Stream Chat theming overrides to blend with app theme */
+.str-chat,
+.str-chat__container,
+.str-chat__channel-list,
+.str-chat__list,
+.str-chat__main-panel {
+  background-color: transparent !important;
 }
 
-.str-chat__container {
-  max-width: 1200px;
-  width: 100%;
-  height: 80% !important;
-  margin: 0 auto !important;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+.str-chat__channel-preview,
+.str-chat__channel-preview--active {
+  background-color: transparent !important;
 }
 
-.str-chat__list {
-  background-color: #ffffff;
-  padding: 12px;
-}
-
-.str-chat__list-notifications {
-  display: none;
+.str-chat__channel-preview-title,
+.str-chat__channel-preview-last-message {
+  color: inherit !important;
 }
 
 .str-chat__message-input {
@@ -40,4 +34,12 @@
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Safari and Chrome */
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

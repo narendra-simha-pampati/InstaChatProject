@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router";
+import { useState } from "react";
 import FriendsPage from "./pages/FriendsPage.jsx";
 import GroupsPage from "./pages/GroupsPage.jsx";
 
@@ -8,22 +9,50 @@ import LoginPage from "./pages/LoginPage.jsx";
 import NotificationsPage from "./pages/NotificationsPage.jsx";
 import CallPage from "./pages/CallPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
+import ChatsPage from "./pages/ChatsPage.jsx";
+import UserProfilePage from "./pages/UserProfilePage.jsx";
 import OnboardingPage from "./pages/OnboardingPage.jsx";
-import Settings from "./pages/Settings.jsx";   // ✅ NEW IMPORT
+import Settings from "./pages/Settings.jsx";
+import AboutPage from "./pages/AboutPage.jsx";
+import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 
 import { Toaster } from "react-hot-toast";
 
 import PageLoader from "./components/PageLoader.jsx";
 import useAuthUser from "./hooks/useAuthUser.js";
 import Layout from "./components/Layout.jsx";
+import VideoCallNotification from "./components/VideoCallNotification.jsx";
 import { useThemeStore } from "./store/useThemeStore.js";
 
 const App = () => {
   const { isLoading, authUser } = useAuthUser();
   const { theme } = useThemeStore();
+  const [incomingCall, setIncomingCall] = useState(null);
 
   const isAuthenticated = Boolean(authUser);
   const isOnboarded = authUser?.isOnboarded;
+
+  const handleAcceptCall = () => {
+    if (incomingCall) {
+      window.location.href = `/call/${incomingCall.caller._id}`;
+    }
+    setIncomingCall(null);
+  };
+
+  const handleDeclineCall = () => {
+    setIncomingCall(null);
+  };
+
+  // Simulate incoming call for testing (remove in production)
+  const simulateIncomingCall = () => {
+    setIncomingCall({
+      caller: {
+        _id: "test-user-id",
+        fullName: "Test User",
+        profilePic: "/default-avatar.png"
+      }
+    });
+  };
 
   if (isLoading) return <PageLoader />;
 
@@ -59,6 +88,17 @@ const App = () => {
           element={
             !isAuthenticated ? (
               <LoginPage />
+            ) : (
+              <Navigate to={isOnboarded ? "/" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
+          path="/verify-email"
+          element={
+            !isAuthenticated ? (
+              <VerifyEmailPage />
             ) : (
               <Navigate to={isOnboarded ? "/" : "/onboarding"} />
             )
@@ -103,6 +143,19 @@ const App = () => {
         />
 
         <Route
+          path="/profile/:id"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <UserProfilePage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
           path="/onboarding"
           element={
             isAuthenticated ? (
@@ -124,6 +177,19 @@ const App = () => {
             isAuthenticated && isOnboarded ? (
               <Layout showSidebar={true}>
                 <Settings />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
+        <Route
+          path="/about"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <AboutPage />
               </Layout>
             ) : (
               <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
@@ -156,9 +222,30 @@ const App = () => {
           }
         />
 
+        <Route
+          path="/chats"
+          element={
+            isAuthenticated && isOnboarded ? (
+              <Layout showSidebar={true}>
+                <ChatsPage />
+              </Layout>
+            ) : (
+              <Navigate to={!isAuthenticated ? "/login" : "/onboarding"} />
+            )
+          }
+        />
+
       </Routes>
 
       <Toaster />
+      
+      {/* Video Call Notification */}
+      <VideoCallNotification
+        callData={incomingCall}
+        onAccept={handleAcceptCall}
+        onDecline={handleDeclineCall}
+      />
+      
     </div>
   );
 };

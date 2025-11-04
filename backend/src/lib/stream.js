@@ -28,3 +28,50 @@ export const generateStreamToken = (userId) => {
     console.error("Error generating Stream token:", error);
   }
 };
+
+// Ensure a group channel exists and contains given members
+export const ensureGroupChannel = async ({ groupId, name, image, memberIds = [] }) => {
+  const channelId = `group-${groupId}`;
+  try {
+    const channel = streamClient.channel("messaging", channelId, { name, image });
+    // Create if doesn't exist
+    await channel.create();
+    if (memberIds.length) {
+      await channel.addMembers(memberIds.map((id) => id.toString()));
+    }
+    return channelId;
+  } catch (error) {
+    // If channel already exists, update its data and ensure members are present
+    try {
+      const channel = streamClient.channel("messaging", channelId);
+      await channel.update({ name, image });
+      if (memberIds.length) {
+        await channel.addMembers(memberIds.map((id) => id.toString()));
+      }
+      return channelId;
+    } catch (e) {
+      console.error("Error ensuring group channel:", e?.message || e);
+      return null;
+    }
+  }
+};
+
+export const addMemberToGroupChannel = async ({ groupId, userId }) => {
+  const channelId = `group-${groupId}`;
+  try {
+    const channel = streamClient.channel("messaging", channelId);
+    await channel.addMembers([userId.toString()]);
+  } catch (error) {
+    console.error("Error adding member to group channel:", error?.message || error);
+  }
+};
+
+export const removeMemberFromGroupChannel = async ({ groupId, userId }) => {
+  const channelId = `group-${groupId}`;
+  try {
+    const channel = streamClient.channel("messaging", channelId);
+    await channel.removeMembers([userId.toString()]);
+  } catch (error) {
+    console.error("Error removing member from group channel:", error?.message || error);
+  }
+};
