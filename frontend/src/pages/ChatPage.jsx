@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import useAuthUser from "../hooks/useAuthUser";
 import { useQuery } from "@tanstack/react-query";
-import { getStreamToken, getGroupDetails } from "../lib/api";
+import { getStreamToken } from "../lib/api";
 
 import {
   Channel,
@@ -23,7 +23,7 @@ import DoodleCanvas from "../components/DoodleCanvas";
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
 const ChatPage = () => {
-  const { id: routeId } = useParams();
+  const { id: targetUserId } = useParams();
 
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
@@ -56,36 +56,16 @@ const ChatPage = () => {
           tokenData.token
         );
 
-        let currChannel;
-        // If routeId looks like a channelId (e.g., 'group-<groupId>' or any hyphenated id not matching a single user id), open by id
-        if (routeId && (routeId.startsWith("group-") || routeId.includes("-") && routeId.split("-").length > 1 && routeId !== authUser._id)) {
-          const channelId = routeId;
-          currChannel = client.channel("messaging", channelId);
+        //
+        const channelId = [authUser._id, targetUserId].sort().join("-");
 
-          // If it's a group channel, ensure it's created with members & metadata
-          if (channelId.startsWith("group-")) {
-            try {
-              const groupId = channelId.replace("group-", "");
-              const group = await getGroupDetails(groupId);
-              const memberIds = group.members?.filter(m => m.isActive)?.map(m => m.user?._id || m.user) || [];
-              await currChannel.create(); // create if not exists
-              await currChannel.update({ name: group.name, image: group.avatar || undefined }, memberIds.length ? memberIds : undefined);
-              // Add members to channel if not present
-              if (memberIds.length) {
-                await currChannel.addMembers(memberIds);
-              }
-            } catch (e) {
-              console.warn("Could not ensure group channel members:", e?.message);
-            }
-          }
-        } else {
-          // DM between authUser and target user id
-          const targetUserId = routeId;
-          const channelId = [authUser._id, targetUserId].sort().join("-");
-          currChannel = client.channel("messaging", channelId, {
-            members: [authUser._id, targetUserId],
-          });
-        }
+        // you and me
+        // if i start the chat => channelId: [myId, yourId]
+        // if you start the chat => channelId: [yourId, myId]  => [myId,yourId]
+
+        const currChannel = client.channel("messaging", channelId, {
+          members: [authUser._id, targetUserId],
+        });
 
         await currChannel.watch();
 
@@ -100,7 +80,7 @@ const ChatPage = () => {
     };
 
     initChat();
-  }, [tokenData, authUser, routeId]);
+  }, [tokenData, authUser, targetUserId]);
 
   const handleVideoCall = () => {
     if (channel) {
@@ -133,7 +113,7 @@ const ChatPage = () => {
   if (loading || !chatClient || !channel) return <ChatLoader />;
 
   return (
-    <div className="h-screen w-screen fixed inset-0 z-40 bg-base-100">
+    <div className="h-screen w-screen fixed inset-0 z-40 bg-white">
       <Chat client={chatClient}>
         <Channel channel={channel}>
           <div className="w-full h-full relative">

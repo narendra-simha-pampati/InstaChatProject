@@ -78,14 +78,6 @@ const userSchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
-      showUnreadBadges: {
-        type: Boolean,
-        default: true,
-      },
-      showLastMessagePreview: {
-        type: Boolean,
-        default: true,
-      },
     },
   },
   { timestamps: true }
