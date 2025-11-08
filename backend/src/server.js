@@ -6,7 +6,8 @@ import path from "path";
 import session from "express-session";
 import passport from "passport";
 import "./config/passport.js";   // make sure this path is correct
-
+import MongoStore from 'connect-mongo'; // Keep this import
+// OR: const MongoStore = require('connect-mongo');
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import chatRoutes from "./routes/chat.route.js";
@@ -30,7 +31,13 @@ app.use(
 // session middleware (must be before passport)
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "supersecretkey",
+    // ⬇️ MODIFIED: Implement MongoStore to fix MemoryStore warning ⬇️
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI, // Use the verified MONGO_URI from Railway
+      ttl: 14 * 24 * 60 * 60, // Optional: 14 days session life
+    }),
+    secret: process.env.SESSION_SECRET, // Use the SESSION_SECRET from Railway
+    // ⬆️ END MODIFIED SECTION ⬆️
     resave: false,
     saveUninitialized: false,
   })
@@ -63,4 +70,3 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   connectDB();
 });
-
