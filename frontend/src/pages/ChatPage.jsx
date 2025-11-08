@@ -40,7 +40,15 @@ const ChatPage = () => {
 
   useEffect(() => {
     const initChat = async () => {
-      if (!tokenData?.token || !authUser) return;
+      if (!authUser) {
+        setLoading(false);
+        return;
+      }
+      if (!tokenData?.token) {
+        setLoading(false);
+        toast.error("Could not get chat token. Please login again or try later.");
+        return;
+      }
 
       try {
         console.log("Initializing stream chat client...");
