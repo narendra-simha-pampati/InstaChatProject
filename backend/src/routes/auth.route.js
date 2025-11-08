@@ -1,17 +1,17 @@
 import express from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
-import { login, logout, onboard, signup, verifyEmailOtp, resendEmailOtp } from "../controllers/auth.controller.js";
+import { login, logout, onboard, signup } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // Local auth
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/logout", logout);
-router.post("/verify-otp", verifyEmailOtp);
-router.post("/resend-otp", resendEmailOtp);
+
 
 router.post("/onboarding", protectRoute, onboard);
 
@@ -32,7 +32,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: "http://localhost:5173/login",
+    failureRedirect: `${FRONTEND_URL}/login`,
     session: true,
   }),
   (req, res) => {
@@ -51,7 +51,7 @@ router.get(
     });
 
     // Redirect to frontend app root
-    res.redirect("http://localhost:5173/");
+    res.redirect(`${FRONTEND_URL}/`);
   }
 );
 
@@ -59,7 +59,7 @@ router.get(
 router.get("/google/logout", (req, res) => {
   req.logout((err) => {
     if (err) return res.status(500).json({ message: "Logout failed" });
-    res.redirect("http://localhost:5173/login");
+    res.redirect(`${FRONTEND_URL}/login`);
   });
 });
 

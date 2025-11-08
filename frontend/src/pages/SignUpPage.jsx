@@ -15,9 +15,8 @@ const SignUpPage = () => {
   const handleSignup = (e) => {
     e.preventDefault();
     signupMutation(signupData, {
-      onSuccess: (res) => {
-        const email = signupData.email;
-        navigate("/verify-email", { state: { email } });
+      onSuccess: () => {
+        navigate("/onboarding");
       },
     });
   };

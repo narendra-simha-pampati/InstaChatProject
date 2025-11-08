@@ -14,7 +14,6 @@ import UserProfilePage from "./pages/UserProfilePage.jsx";
 import OnboardingPage from "./pages/OnboardingPage.jsx";
 import Settings from "./pages/Settings.jsx";
 import AboutPage from "./pages/AboutPage.jsx";
-import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 
 import { Toaster } from "react-hot-toast";
 
@@ -94,16 +93,7 @@ const App = () => {
           }
         />
 
-        <Route
-          path="/verify-email"
-          element={
-            !isAuthenticated ? (
-              <VerifyEmailPage />
-            ) : (
-              <Navigate to={isOnboarded ? "/" : "/onboarding"} />
-            )
-          }
-        />
+        
 
         <Route
           path="/notifications"
