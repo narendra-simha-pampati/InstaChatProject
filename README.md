@@ -2,6 +2,14 @@
 
 A full-stack social media application built with React, Node.js, and MongoDB, featuring real-time messaging, video calling, stories, and group chat functionality.
 
+## 🖼️ Preview
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="InstaChat dashboard - dark theme" width="900" />
+  <br />
+  <em>Home dashboard in dark theme</em>
+  </p>
+
 ## 🚀 Features
 
 ### Core Features
