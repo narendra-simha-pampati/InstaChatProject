@@ -72,15 +72,16 @@ app.use("/api/stories", storyRoutes);
 app.use("/api/groups", groupRoutes);
 
 // ⬇️ CORRECTED STATIC FILE SERVING BLOCK ⬇️
+// ⬇️ With this corrected, reliable block: ⬇️
 if (process.env.NODE_ENV === "production") {
-  // CORRECTED PATH: Use path.resolve(process.cwd()) to ensure we start from the
-  // project root (/app), ignoring the backend subdirectory.
+  // CORRECTED PATH: Use path.resolve(process.cwd()) to reliably point to the
+  // project root (/app), then append the correct path to frontend/dist.
   const staticPath = path.resolve(process.cwd(), "frontend", "dist");
   
   app.use(express.static(staticPath));
 
-  app.get("*", (req, res, next) => { // Added 'next' here as well, needed for the check below
-    // Ensure we only serve index.html for unknown routes (and not for static assets)
+  app.get("*", (req, res, next) => { 
+    // This serves the frontend's index.html for all non-API and non-static asset requests.
     if (path.extname(req.url).length > 0) return next();
     res.sendFile(path.join(staticPath, "index.html"));
   });
