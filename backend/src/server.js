@@ -71,22 +71,21 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/stories", storyRoutes);
 app.use("/api/groups", groupRoutes);
 
-// ⬇️ MODIFIED: Check NODE_ENV and serve static files ⬇️
+// ⬇️ CORRECTED STATIC FILE SERVING BLOCK ⬇️
 if (process.env.NODE_ENV === "production") {
-  // Check if the frontend 'dist' directory exists at the expected path
-  const staticPath = path.join(__dirname, "frontend", "dist");
+  // CORRECTED PATH: Use path.resolve(process.cwd()) to ensure we start from the
+  // project root (/app), ignoring the backend subdirectory.
+  const staticPath = path.resolve(process.cwd(), "frontend", "dist");
   
-  // Use a more robust path starting from __dirname which is the root in Railway
   app.use(express.static(staticPath));
 
-  // Catch all other requests and send the frontend's index.html
-  app.get("*", (req, res) => {
-    // Only send if the file exists (prevents crashing)
+  app.get("*", (req, res, next) => { // Added 'next' here as well, needed for the check below
+    // Ensure we only serve index.html for unknown routes (and not for static assets)
     if (path.extname(req.url).length > 0) return next();
     res.sendFile(path.join(staticPath, "index.html"));
   });
 }
-// ⬆️ END MODIFIED SECTION ⬆️
+// ⬆️ END CORRECTED SECTION ⬆️
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
