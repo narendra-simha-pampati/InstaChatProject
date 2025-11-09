@@ -74,10 +74,11 @@ app.use("/api/groups", groupRoutes);
 // ⬇️ CORRECTED STATIC FILE SERVING BLOCK ⬇️
 // ⬇️ With this corrected, reliable block: ⬇️
 if (process.env.NODE_ENV === "production") {
-  // CORRECTED PATH: Use path.resolve(process.cwd()) to reliably point to the
-  // project root (/app), then append the correct path to frontend/dist.
-  const staticPath = path.resolve(process.cwd(), "frontend", "dist");
+  // CORRECTED PATH: Use '..' to navigate up one directory from 'backend' 
+  // to '/app', and then look for 'frontend/dist'.
+  const staticPath = path.join(__dirname, "..", "frontend", "dist");
   
+  // Ensure 'next' is correctly passed to the app.get function
   app.use(express.static(staticPath));
 
   app.get("*", (req, res, next) => { 
