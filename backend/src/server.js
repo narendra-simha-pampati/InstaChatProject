@@ -6,8 +6,7 @@ import path from "path";
 import session from "express-session";
 import passport from "passport";
 import "./config/passport.js";   // make sure this path is correct
-import MongoStore from 'connect-mongo'; // Keep this import
-// OR: const MongoStore = require('connect-mongo');
+import MongoStore from 'connect-mongo';
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import chatRoutes from "./routes/chat.route.js";
@@ -21,23 +20,37 @@ const PORT = process.env.PORT || 5001;
 
 const __dirname = path.resolve();
 
+// ⬇️ MODIFIED: Set the CORS origin to allow the live railway domain and localhost ⬇️
+// This ensures that your frontend and backend can communicate in production.
+const CORS_ORIGIN = process.env.CORS_ORIGIN || `https://instachatproject-production.up.railway.app`;
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: CORS_ORIGIN, // Use the dynamically set origin
     credentials: true, // allow frontend to send cookies
   })
 );
+// ⬆️ END MODIFIED SECTION ⬆️
 
 // session middleware (must be before passport)
+// The SESSION_SECRET check is essential and was likely crashing the server earlier.
+const SESSION_SECRET = process.env.SESSION_SECRET;
+
+// ⬇️ MODIFIED: Crash defense for missing SESSION_SECRET ⬇️
+// This is added to prevent a crash if SESSION_SECRET is not set in Railway.
+if (!SESSION_SECRET) {
+    console.error("CRITICAL ERROR: SESSION_SECRET environment variable is not set.");
+    process.exit(1); // Stop deployment if a critical secret is missing
+}
+// ⬆️ END MODIFIED SECTION ⬆️
+
 app.use(
   session({
-    // ⬇️ MODIFIED: Implement MongoStore to fix MemoryStore warning ⬇️
     store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI, // Use the verified MONGO_URI from Railway
-      ttl: 14 * 24 * 60 * 60, // Optional: 14 days session life
+      mongoUrl: process.env.MONGO_URI,
+      ttl: 14 * 24 * 60 * 60,
     }),
-    secret: process.env.SESSION_SECRET, // Use the SESSION_SECRET from Railway
-    // ⬆️ END MODIFIED SECTION ⬆️
+    secret: SESSION_SECRET, // Use the checked secret
     resave: false,
     saveUninitialized: false,
   })
@@ -58,13 +71,22 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/stories", storyRoutes);
 app.use("/api/groups", groupRoutes);
 
+// ⬇️ MODIFIED: Check NODE_ENV and serve static files ⬇️
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  // Check if the frontend 'dist' directory exists at the expected path
+  const staticPath = path.join(__dirname, "frontend", "dist");
+  
+  // Use a more robust path starting from __dirname which is the root in Railway
+  app.use(express.static(staticPath));
 
+  // Catch all other requests and send the frontend's index.html
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+    // Only send if the file exists (prevents crashing)
+    if (path.extname(req.url).length > 0) return next();
+    res.sendFile(path.join(staticPath, "index.html"));
   });
 }
+// ⬆️ END MODIFIED SECTION ⬆️
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
