@@ -5,7 +5,7 @@ A full-stack social media application built with React, Node.js, and MongoDB, fe
 ## 🖼️ Preview
 
 <p align="center">
-  <img src="screenshot-for-readme.png" alt="InstaChat dashboard - dark theme" width="900" />
+  <img src="/Users/narendra/Desktop/screenshotreadme.png" alt="InstaChat dashboard - dark theme" width="900" />
   <br />
   <em>Home dashboard in dark theme</em>
   </p>
