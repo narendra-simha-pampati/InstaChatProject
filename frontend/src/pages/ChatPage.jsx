@@ -10,7 +10,6 @@ import {
   Chat,
   MessageInput,
   MessageList,
-  Thread,
   Window,
 } from "stream-chat-react";
 import { StreamChat } from "stream-chat";
@@ -23,7 +22,7 @@ import DoodleCanvas from "../components/DoodleCanvas";
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
 
 const ChatPage = () => {
-  const { id: targetUserId } = useParams();
+  const { id: routeId } = useParams();
 
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
@@ -63,17 +62,20 @@ const ChatPage = () => {
           },
           tokenData.token
         );
-
-        //
-        const channelId = [authUser._id, targetUserId].sort().join("-");
-
-        // you and me
-        // if i start the chat => channelId: [myId, yourId]
-        // if you start the chat => channelId: [yourId, myId]  => [myId,yourId]
-
-        const currChannel = client.channel("messaging", channelId, {
-          members: [authUser._id, targetUserId],
-        });
+        const isGroup = routeId?.startsWith("group-");
+        let currChannel;
+        if (isGroup) {
+          // Group channel already ensured on the server; just connect/watch it
+          const channelId = routeId; // e.g., group-<groupId>
+          currChannel = client.channel("messaging", channelId);
+        } else {
+          // Direct message channel between two users
+          const targetUserId = routeId;
+          const channelId = [authUser._id, targetUserId].sort().join("-");
+          currChannel = client.channel("messaging", channelId, {
+            members: [authUser._id, targetUserId],
+          });
+        }
 
         await currChannel.watch();
 
@@ -88,7 +90,7 @@ const ChatPage = () => {
     };
 
     initChat();
-  }, [tokenData, authUser, targetUserId]);
+  }, [tokenData, authUser, routeId]);
 
   const handleVideoCall = () => {
     if (channel) {
@@ -128,7 +130,8 @@ const ChatPage = () => {
             <CallButton handleVideoCall={handleVideoCall} />
             <Window>
               <ChannelHeader />
-              <MessageList />
+              {/* Disable 'reply' action to avoid opening side threads */}
+              <MessageList messageActions={["edit", "delete", "flag", "mute", "react"]} />
               <MessageInput focus>
                 <MessageInput.Input />
                 <MessageInput.ButtonSend />
@@ -143,7 +146,6 @@ const ChatPage = () => {
               </MessageInput>
             </Window>
           </div>
-          <Thread />
         </Channel>
       </Chat>
       
